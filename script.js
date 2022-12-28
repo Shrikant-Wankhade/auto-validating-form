@@ -12,6 +12,22 @@ class ValidationError extends Error {
     }
   }
   
+  function validatePassword(password) {
+    if (!password) {
+      throw new ValidationError('Password cannot be empty');
+    }
+    if (password.length < 6) {
+      throw new ValidationError('Password length too short');
+    }
+  }
+  
+  function validateConfirmPassword(password) {
+    const currentPassword = document.getElementsByClassName('signup__field__inputs__input--password')[0].value;
+    if (password && password !== currentPassword) {
+      throw new ValidationError('Password did not match');
+    }
+  }
+  
   function validateEmail(email) {
     const emailRegex = /^[a-zA-Z0-9]{1}[a-zA-Z0-9@._-]+[a-zA-Z]$/;
     if (!emailRegex.test(email)) {
@@ -79,37 +95,37 @@ class ValidationError extends Error {
     'username': validateUsername,
     'day': validateDay,
     'year': validateYear,
-    'phoneNumber': validatePhoneNumber
+    'phoneNumber': validatePhoneNumber,
+    'password': validatePassword,
+    'confirmPassword': validateConfirmPassword
   }
   
-  function validate(event) {
-    const inputElement = event.target;
-  
+  function validate(inputElement) {
     const field = inputElement.dataset.field;
-    
+  
     if (field === 'password') {
-      // TODO: Something special
-      return;
+      const confirmPassword = document.getElementsByClassName('signup__field__inputs__input--confirm-password')[0];
+      validate(confirmPassword);
     }
   
-    const errorMessageElement = event.target.parentElement.getElementsByClassName('signup__field__error')[0];
+    const errorMessageElement = inputElement.parentElement.parentElement.getElementsByClassName('signup__field__error')[0];
     try {
       validationMapping[field](inputElement.value); 
       errorMessageElement.innerHTML = '';
-      inputElement.classList.remove('signup__field__input--error');
+      inputElement.classList.remove('signup__field__inputs__input--error');
     } catch (err) {
       if (!(err instanceof ValidationError)) {
         // Log real error
         throw err 
       }
       errorMessageElement.innerHTML = err.message;
-      inputElement.classList.add('signup__field__input--error');
+      inputElement.classList.add('signup__field__inputs__input--error');
     }
   }
   
-  const inputs = document.getElementsByClassName('signup__field__input');
+  const inputs = document.getElementsByClassName('signup__field__inputs__input');
   
   for (const input of inputs) {
-    input.onblur = validate;
+    input.onblur = (event) => validate(event.target);
   }
   
